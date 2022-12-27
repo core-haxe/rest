@@ -71,7 +71,7 @@ operation.bodyType = BodyType.Json;
 operation.client = client;
 var product = new Product();
 product.title = "some new title";
-operation.call(product).then(result -> { "result" is of type "Product"
+operation.call(product).then(result -> { // "result" is of type "Product"
     trace(result.id);
 }, (error:DummyError) -> {
     // error
@@ -113,14 +113,14 @@ api.products.list().then(result -> { // "result" is of type "ProductList"
 // api call with path parameter
 api.products.get({id: 6}).then(result -> { // "result" is of type "Product"
     trace(result.id);
-}, (error:RestError) -> {
+}, (error:DummyError) -> {
     // error
 });
 
 // api call with query parameter
 api.products.search({query: "Laptop"}).then(result -> { // "result" is of type "ProductList"
     trace(result.products[0].id);
-}, (error:RestError) -> {
+}, (error:DummyError) -> {
     // error
 });
 
@@ -129,7 +129,7 @@ var product = new Product();
 product.title = "some new title";
 api.products.add(product).then(result -> { // "result" is of type "Product"
     trace(result.id);
-}, (error:RestError) -> {
+}, (error:DummyError) -> {
     // error
 });
 
