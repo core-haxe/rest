@@ -1,0 +1,10 @@
+--class-path .
+--main TestAll
+
+-lib utest
+-lib rest
+-lib json2object
+-D no-deprecation-warnings
+
+--neko build/neko/test-all.n
+--cmd neko .\build\neko\test-all.n

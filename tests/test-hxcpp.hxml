@@ -1,0 +1,10 @@
+--class-path .
+--main TestAll
+
+-lib utest
+-lib rest
+-lib json2object
+-D no-deprecation-warnings
+
+--cpp build/hxcpp
+--cmd .\build\hxcpp\TestAll
