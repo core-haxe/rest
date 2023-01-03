@@ -1,5 +1,6 @@
 package rest.macros;
 
+import haxe.macro.TypedExprTools;
 import haxe.macro.TypeTools;
 import haxe.macro.ComplexTypeTools;
 import haxe.macro.ExprTools;
@@ -27,6 +28,18 @@ class RestApiBuilder {
             pack: parts,
             name: s
         });
+
+        var clientExpr:Expr = null;  
+        var clientMeta = Context.getLocalClass().get().meta.extract(":config");
+        if (clientMeta != null && clientMeta.length == 1) {
+            clientExpr = clientMeta[0].params[0];
+        }
+
+        var alternateClientExpr:Expr = null;  
+        var alternateClientMeta = Context.getLocalClass().get().meta.extract(":alternateConfig");
+        if (alternateClientMeta != null && alternateClientMeta.length == 1) {
+            alternateClientExpr = alternateClientMeta[0].params[0];
+        }
 
         var fields = Context.getBuildFields();
         for (field in fields) {
@@ -89,6 +102,7 @@ class RestApiBuilder {
                                 operation.queryParams = $v{queryParams};
                                 operation.bodyType = rest.BodyType.$bodyType;
                                 operation.client = this.client;
+                                operation.useAlternateConfig = this.useAlternateConfig;
                                 return operation.call($i{argName});
                             }
                         } else {
@@ -99,6 +113,7 @@ class RestApiBuilder {
                                 operation.queryParams = $v{queryParams};
                                 operation.bodyType = rest.BodyType.$bodyType;
                                 operation.client = this.client;
+                                operation.useAlternateConfig = this.useAlternateConfig;
                                 return operation.call();
                             }
                         }
@@ -113,12 +128,21 @@ class RestApiBuilder {
                         name: s
                     };
 
-                    var ctor = findOrAddConstructor(fields);
+                    switch (Context.resolveType(t, Context.currentPos())) {
+                        case TInst(t, params):
+                            if (t.get().superClass == null || t.get().superClass.t.toString() != "rest.RestApi") {
+                                continue;
+                            }
+                        case _:
+                            continue;   
+                    }
+
+                    var ctor = findOrAddConstructor(fields, clientExpr, alternateClientExpr);
                     switch(ctor.kind) {
                         case FFun(f):
                             switch (f.expr.expr) {
                                 case EBlock(exprs): {
-                                    exprs.push(macro $i{varName} = new $varType(client));
+                                    exprs.push(macro $i{varName} = new $varType(client, this));
                                 }
                                 case _:
                             }
@@ -130,7 +154,7 @@ class RestApiBuilder {
         return fields;
     }
 
-    private static function findOrAddConstructor(fields:Array<Field>):Field {
+    private static function findOrAddConstructor(fields:Array<Field>, clientExpr:Expr, alternateClientExpr:Expr):Field {
         var ctor:Field = null;
         for (field in fields) {
             if (field.name == "new") {
@@ -139,17 +163,34 @@ class RestApiBuilder {
         }
 
         if (ctor == null) {
+            var args = [];
+            var expr = null;
+            if (clientExpr == null && alternateClientExpr == null) {
+                args = [{
+                    name: "client",
+                    type: macro: rest.RestClient
+                }];
+                expr = macro {
+                    super(client);
+                }
+            } else if (clientExpr != null && alternateClientExpr == null) {
+                expr = macro {
+                    var client = new rest.RestClient($clientExpr);
+                    super(client);
+                }
+            } else if (clientExpr != null && alternateClientExpr != null) {
+                expr = macro {
+                    var client = new rest.RestClient($clientExpr, $alternateClientExpr);
+                    super(client);
+                }
+            }
+
             ctor = {
                 name: "new",
                 access: [APublic],
                 kind: FFun({
-                    args:[{
-                        name: "client",
-                        type: macro: rest.RestClient
-                    }],
-                    expr: macro {
-                        super(client);
-                    }
+                    args: args,
+                    expr: expr
                 }),
                 pos: Context.currentPos()
             }

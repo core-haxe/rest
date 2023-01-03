@@ -22,6 +22,7 @@ class RestOperation<TRequest:IMappable,
     public var queryParams:Map<String, Any>;
     public var bodyType:BodyType = BodyType.None;
     public var client:RestClient;
+    public var useAlternateConfig:Bool = false;
 
     public function new() {
     }
@@ -37,6 +38,7 @@ class RestOperation<TRequest:IMappable,
             restRequest.queryParams = queryParams;
             restRequest.verb = verb;
             restRequest.path = path;
+            restRequest.useAlternateConfig = this.useAlternateConfig;
 
             if (bodyType != BodyType.None) {
                 switch (bodyType) {
@@ -55,11 +57,14 @@ class RestOperation<TRequest:IMappable,
                 var response = new TResponse();
                 var contentType = restResult.response.contentType;
                 var responseBody:Any = restResult.response.bodyAsString;
+                /* dont think we want to auto parse response bodies, this is what the response parsers are for
                 if (contentType != null) {
                     if (contentType.startsWith(ContentTypes.ApplicationJson)) {
                         //responseBody = Json.parse(restResult.response.bodyAsString);
                     }
                 }
+                */
+
                 response.parse(responseBody);
                 resolve(response);
             }, (restError:RestError) -> {

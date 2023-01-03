@@ -13,18 +13,25 @@ class RestClient {
     private var log:Logger = new Logger(RestClient);
 
     public var config:RestClientConfig = null;
+    public var alternativeConfig:RestClientConfig = null;
 
-    public function new(config:RestClientConfig = null) {
+    public function new(config:RestClientConfig = null, alternativeConfig:RestClientConfig = null) {
         this.config = config;
         if (this.config == null) {
             this.config = {
                 baseAddress: null
             };
         }
+        this.alternativeConfig = alternativeConfig;
     }
 
     public function makeRequest(request:RestRequest):Promise<RestResult> {
-        var url = new Url(config.baseAddress);
+        var baseAddress = config.baseAddress;
+        if (request.useAlternateConfig && alternativeConfig != null) {
+            baseAddress = alternativeConfig.baseAddress;
+        }
+        var url = new Url(baseAddress);
+
         if (request.path != null) {
             url.path += request.path;
         }
@@ -45,6 +52,17 @@ class RestClient {
             }
         }
 
+        var requestTransformers = config.requestTransformers;
+        if (request.useAlternateConfig && alternativeConfig != null) {
+            requestTransformers = alternativeConfig.requestTransformers;
+        }
+        if (requestTransformers != null && requestTransformers.length > 0) {
+            var copy = request.clone();
+            for (requestTransformer in requestTransformers) {
+                requestTransformer.process(copy);
+            }
+            request = copy;
+        }
 
         var httpRequest = new HttpRequest();
         httpRequest.url = url;
@@ -82,6 +100,9 @@ class RestClient {
         }
         if (config.defaultRequestHeaders != null) {
             _httpClient.defaultRequestHeaders = config.defaultRequestHeaders;
+        }
+        if (config.retryCount != null) {
+            _httpClient.retryCount = config.retryCount;
         }
         return _httpClient;
     }
