@@ -2,31 +2,44 @@ package rest;
 
 import haxe.Constraints.Constructible;
 
+using StringTools;
+
 @:generic
 class ParsableArray<TItem:Constructible<Void->Void> & IParsable> implements IParsable {
-    private var _items:Array<TItem> = null;
+    public var items:Array<TItem> = null;
 
     public function parse(response:Any) {
-        _items = [];
+        this.items = [];
+        if ((response is String)) {
+            var responseString:String = response;
+            responseString = responseString.trim();
+            if (responseString.startsWith("[") && responseString.endsWith("]")) {
+                response = haxe.Json.parse(responseString);
+            }
+        }
         if ((response is Array)) {
             var items:Array<Any> = response;
             for (item in items) {
                 var parsable = new TItem();
                 parsable.parse(item);
-                _items.push(item);
+                this.items.push(parsable);
             }
         }
     }
 
+    public inline function item(index:Int):TItem {
+        return items[index];
+    }
+
     public var length(get, null):Int;
     private function get_length():Int {
-        return _items.length;
+        return items.length;
     }
 
 	public function iterator() {
-        if (_items == null) {
+        if (items == null) {
             return null;
         }
-        return _items.iterator();
+        return items.iterator();
     }
 }
