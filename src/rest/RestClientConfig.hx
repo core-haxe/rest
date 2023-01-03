@@ -6,6 +6,7 @@ import http.HttpClient.RequestQueueItem;
 
 typedef RestClientConfig =  {
     var baseAddress:String;
+    var ?retryCount:Int;
     var ?httpProvider:IHttpProvider;
     var ?requestQueueProvider:Class<IQueue<RequestQueueItem>>;
     var ?requestTransformers:Array<IRestRequestTransformer>;
