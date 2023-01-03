@@ -12,7 +12,7 @@ class RestError {
         }
     }
 
-    public var httpStatus:Null<Int>;
+    public var httpStatus(get, null):Null<Int>;
     private function get_httpStatus():Null<Int> {
         if (httpError == null) {
             return null;
