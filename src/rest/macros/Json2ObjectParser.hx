@@ -27,10 +27,15 @@ class Json2ObjectParser {
                     case EBlock(exprs):
                         // we want to use "insert" here as maybe there is custom logic in an already existing function
                         // this way we insert all the parsing and variable assignment before any of that happens
-                        exprs.insert(0, macro var parser = new json2object.JsonParser<$type>());
-                        exprs.insert(1, macro var data = parser.fromJson(response));
+                        exprs.insert(0, macro { // if the response isnt a string, lets turn it into one
+                            if (!(response is String)) {
+                                response = haxe.Json.stringify(response);
+                            }
+                        });
+                        exprs.insert(1, macro var parser = new json2object.JsonParser<$type>());
+                        exprs.insert(2, macro var data = parser.fromJson(response));
 
-                        var n = 2;
+                        var n = 3;
                         for (field in fields) {
                             switch (field.kind) {
                                 case FVar(t, e):
