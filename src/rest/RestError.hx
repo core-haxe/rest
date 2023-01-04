@@ -1,5 +1,7 @@
 package rest;
 
+import haxe.Json;
+import haxe.io.Bytes;
 import http.HttpError;
 
 class RestError {
@@ -36,21 +38,39 @@ class RestError {
         return value;
     }
 
-    public var bodyAsString(get, null):String;
-    private function get_bodyAsString():String {
+    private var _body:Bytes = null;
+    public var body(get, set):Bytes;
+    private function get_body():Bytes {
+        if (_body != null) {
+            return _body;
+        }
+
         if (httpError == null) {
             return null;
         }
 
-        return httpError.bodyAsString;
+        return httpError.body;
+    }
+    private function set_body(value:Bytes):Bytes {
+        _body = value;
+        return value;
+    }
+
+    public var bodyAsString(get, null):String;
+    private function get_bodyAsString():String {
+        var body = this.body;
+        if (body == null) {
+            return null;
+        }
+        return body.toString();
     }
 
     public var bodyAsJson(get, null):Dynamic;
     private function get_bodyAsJson():Dynamic {
-        if (httpError == null) {
+        var body = this.body;
+        if (body == null) {
             return null;
         }
-
-        return httpError.bodyAsJson;
+        return Json.parse(body.toString());
     }
 }
