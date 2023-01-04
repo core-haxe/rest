@@ -3,7 +3,6 @@ package cases;
 import cases.api.DummyJsonApi;
 import cases.api.Product;
 import utest.Assert;
-import rest.RestClient;
 import utest.Async;
 import rest.RestError;
 import utest.Test;
