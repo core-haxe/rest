@@ -1,5 +1,6 @@
 package rest;
 
+import haxe.io.Bytes;
 import http.StandardHeaders;
 import haxe.Json;
 import http.ContentTypes;
@@ -65,7 +66,15 @@ class RestOperation<TRequest:IMappable,
                 }
                 */
 
-                response.parse(responseBody);
+                try {
+                    response.parse(responseBody);
+                } catch (e:Dynamic) {
+                    var restError = new RestError();
+                    restError.body = Bytes.ofString(Std.string(e));
+                    var error = new TError();
+                    error.parse(restError);
+                    reject(error);
+                }
                 resolve(response);
             }, (restError:RestError) -> {
                 var error = new TError();
