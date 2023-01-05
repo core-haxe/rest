@@ -8,7 +8,7 @@ import rest.RestError;
 import utest.Test;
 
 @:timeout(2000)
-class TestAutoBuiltApi extends Test {
+class TestAutoBuiltApiMultipleLevels extends Test {
     function setupClass() {
         logging.LogManager.instance.addAdaptor(new logging.adaptors.ConsoleLogAdaptor({
             levels: [logging.LogLevel.Info, logging.LogLevel.Error]

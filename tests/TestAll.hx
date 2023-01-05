@@ -12,7 +12,8 @@ class TestAll {
         runner.addCase(new TestUntyped());
         runner.addCase(new TestTypedOperation());
         runner.addCase(new TestAutoMappingParsing());
-        runner.addCase(new TestAutoBuiltApi());
+        runner.addCase(new TestAutoBuiltApiSingleLevel());
+        runner.addCase(new TestAutoBuiltApiMultipleLevels());
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
         runner.run();

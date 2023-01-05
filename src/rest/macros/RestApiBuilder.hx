@@ -42,6 +42,7 @@ class RestApiBuilder {
         }
 
         var fields = Context.getBuildFields();
+        var ctor = findOrAddConstructor(fields, clientExpr, alternateClientExpr, errorType);
         for (field in fields) {
             switch (field.kind) {
                 case FFun(f):
@@ -137,7 +138,6 @@ class RestApiBuilder {
                             continue;   
                     }
 
-                    var ctor = findOrAddConstructor(fields, clientExpr, alternateClientExpr);
                     switch(ctor.kind) {
                         case FFun(f):
                             switch (f.expr.expr) {
@@ -151,10 +151,11 @@ class RestApiBuilder {
                 case _:    
             }
         }
+
         return fields;
     }
 
-    private static function findOrAddConstructor(fields:Array<Field>, clientExpr:Expr, alternateClientExpr:Expr):Field {
+    private static function findOrAddConstructor(fields:Array<Field>, clientExpr:Expr, alternateClientExpr:Expr, errorType:ComplexType):Field {
         var ctor:Field = null;
         for (field in fields) {
             if (field.name == "new") {
@@ -169,9 +170,13 @@ class RestApiBuilder {
                 args = [{
                     name: "client",
                     type: macro: rest.RestClient
+                }, {
+                    name: "parentApi",
+                    type: macro: rest.RestApi<$errorType>,
+                    value: macro null
                 }];
                 expr = macro {
-                    super(client);
+                    super(client, parentApi);
                 }
             } else if (clientExpr != null && alternateClientExpr == null) {
                 expr = macro {
