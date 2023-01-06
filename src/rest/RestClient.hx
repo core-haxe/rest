@@ -26,6 +26,8 @@ class RestClient {
     }
 
     public function makeRequest(request:RestRequest):Promise<RestResult> {
+        var request = request.clone();
+
         var baseAddress = config.baseAddress;
         if (request.useAlternateConfig && alternativeConfig != null) {
             baseAddress = alternativeConfig.baseAddress;
@@ -38,15 +40,32 @@ class RestClient {
         if (request.urlParams != null) {
             for (key in request.urlParams.keys()) {
                 url.path = url.path.replace('{${key}}', Std.string(request.urlParams.get(key)));
+            }
+        }
 
-                if (request.queryParams != null) {
-                    for (queryParamKey in request.queryParams.keys()) {
-                        var queryParamValue = request.queryParams.get(queryParamKey);
-                        var stringValue = Std.string(queryParamValue);
-                        if (stringValue.indexOf("{") != -1 && stringValue.indexOf("}") != -1) {
-                            stringValue = stringValue.replace('{${key}}', request.urlParams.get(key));
-                            request.queryParams.set(queryParamKey, stringValue);
-                        }
+        // we want to do the replacement of query params here (eg: ?foo={bar}&constant=somevalue)
+        // however, critically, if a param value is supposed be replaced (eg: {bar}) but doesnt
+        // exist as a param passed in, we want to actually remove it from the query params
+        // since sending null / blank values, can lead to bad results, eg:
+        //     ?foo={bar}&constant=somevalue
+        // should be
+        //     ?constant=somevalue
+        // if "bar" isnt supplied
+        if (request.queryParams != null) {
+            for (queryParamKey in request.queryParams.keys()) {
+                var queryParamValue = request.queryParams.get(queryParamKey);
+                var stringValue = Std.string(queryParamValue);
+                if (stringValue.startsWith("{") && stringValue.endsWith("}")) {
+                    var actualParamKey = stringValue.substring(1, stringValue.length - 1);
+                    var actualParamValue = null;
+                    if (request.urlParams != null) {
+                        actualParamValue = request.urlParams.get(actualParamKey);
+                    }
+                    if (actualParamValue == null) {
+                        request.queryParams.remove(queryParamKey);
+                    } else {
+                        stringValue = stringValue.replace('{${actualParamKey}}', request.urlParams.get(actualParamKey));
+                        request.queryParams.set(queryParamKey, stringValue);
                     }
                 }
             }
@@ -57,11 +76,9 @@ class RestClient {
             requestTransformers = alternativeConfig.requestTransformers;
         }
         if (requestTransformers != null && requestTransformers.length > 0) {
-            var copy = request.clone();
             for (requestTransformer in requestTransformers) {
-                requestTransformer.process(copy);
+                requestTransformer.process(request);
             }
-            request = copy;
         }
 
         var httpRequest = new HttpRequest();
