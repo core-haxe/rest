@@ -8,7 +8,7 @@ typedef RestClientConfig =  {
     var baseAddress:String;
     var ?retryCount:Int;
     var ?httpProvider:IHttpProvider;
-    var ?requestQueueProvider:Class<IQueue<RequestQueueItem>>;
+    var ?requestQueue:IQueue<Int>;
     var ?requestTransformers:Array<IRestRequestTransformer>;
     var ?responseTransformers:Array<IRestResponseTransformer>;
     var ?defaultRequestHeaders:Map<String, Any>;

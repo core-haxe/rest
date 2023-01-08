@@ -112,8 +112,8 @@ class RestClient {
         if (config.httpProvider != null) {
             _httpClient.provider = config.httpProvider;
         }
-        if (config.requestQueueProvider != null) {
-            _httpClient.requestQueueProvider = config.requestQueueProvider;
+        if (config.requestQueue != null) {
+            _httpClient.requestQueue = config.requestQueue;
         }
         if (config.defaultRequestHeaders != null) {
             _httpClient.defaultRequestHeaders = config.defaultRequestHeaders;
