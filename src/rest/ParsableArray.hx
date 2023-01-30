@@ -42,4 +42,8 @@ class ParsableArray<TItem:Constructible<Void->Void> & IParsable> implements IPar
         }
         return items.iterator();
     }
+
+    public function toArray():Array<TItem> {
+        return items;
+    }
 }
