@@ -12,7 +12,7 @@ class AddAuthorizationHeader implements IRestRequestTransformer {
         this.config = config;
     }
 
-    public function process(request:RestRequest) {
+    public function process(request:RestRequest, transformationParams:Map<String, Any> = null) {
         var headerName = config.headerName;
         if (headerName == null || headerName == "") {
             headerName = "Authorization";

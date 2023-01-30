@@ -24,6 +24,7 @@ class RestOperation<TRequest:IMappable,
     public var bodyType:BodyType = BodyType.None;
     public var client:RestClient;
     public var useAlternateConfig:Bool = false;
+    public var transformationParams:Map<String, Any>;
 
     public function new() {
     }
@@ -54,7 +55,7 @@ class RestOperation<TRequest:IMappable,
                 }
             }
 
-            client.makeRequest(restRequest).then(restResult -> {
+            client.makeRequest(restRequest, transformationParams).then(restResult -> {
                 var response = new TResponse();
                 var contentType = restResult.response.contentType;
                 var responseBody:Any = restResult.response.bodyAsString;

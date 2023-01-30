@@ -104,6 +104,7 @@ class RestApiBuilder {
                                 operation.bodyType = rest.BodyType.$bodyType;
                                 operation.client = this.client;
                                 operation.useAlternateConfig = this.useAlternateConfig;
+                                operation.transformationParams = ["api" => this];
                                 return operation.call($i{argName});
                             }
                         } else {
@@ -115,6 +116,7 @@ class RestApiBuilder {
                                 operation.bodyType = rest.BodyType.$bodyType;
                                 operation.client = this.client;
                                 operation.useAlternateConfig = this.useAlternateConfig;
+                                operation.transformationParams = ["api" => this];
                                 return operation.call();
                             }
                         }

@@ -25,7 +25,7 @@ class RestClient {
         this.alternativeConfig = alternativeConfig;
     }
 
-    public function makeRequest(request:RestRequest):Promise<RestResult> {
+    public function makeRequest(request:RestRequest, tranformationParams:Map<String, Any> = null):Promise<RestResult> {
         var request = request.clone();
 
         var baseAddress = config.baseAddress;
@@ -77,7 +77,7 @@ class RestClient {
         }
         if (requestTransformers != null && requestTransformers.length > 0) {
             for (requestTransformer in requestTransformers) {
-                requestTransformer.process(request);
+                requestTransformer.process(request, tranformationParams);
             }
         }
 
