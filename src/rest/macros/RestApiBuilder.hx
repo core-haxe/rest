@@ -44,6 +44,10 @@ class RestApiBuilder {
         var fields = Context.getBuildFields();
         var ctor = findOrAddConstructor(fields, clientExpr, alternateClientExpr, errorType);
         for (field in fields) {
+            if (field.access.contains(AStatic)) {
+                continue;
+            }
+            
             switch (field.kind) {
                 case FFun(f):
                     if (f.expr == null) {
