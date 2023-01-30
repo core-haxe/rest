@@ -51,7 +51,20 @@ class RestOperation<TRequest:IMappable,
                         } else if (!restRequest.headers.exists(StandardHeaders.ContentType)) {
                             restRequest.headers.set(StandardHeaders.ContentType, ContentTypes.ApplicationJson);
                         }
-                    case BodyType.FormData:
+                    case BodyType.FormData: 
+                        #if (js && !nodejs) 
+
+                        var formFields = request.toMap();
+                        if (restRequest.queryParams == null) {
+                            restRequest.queryParams = [];
+                        }
+                        for (k in formFields.keys()) {
+                            var v = formFields.get(k);
+                            restRequest.queryParams.set(k, v);
+                        }
+
+                        #else
+
                         var formData = new http.FormData();
                         var formFields = request.toMap();
                         for (k in formFields.keys()) {
@@ -71,6 +84,8 @@ class RestOperation<TRequest:IMappable,
                         }
 
                         restRequest.body = body;
+
+                        #end
                     case _:    
                 }
             }
