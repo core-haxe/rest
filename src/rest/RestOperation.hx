@@ -52,7 +52,7 @@ class RestOperation<TRequest:IMappable,
                             restRequest.headers.set(StandardHeaders.ContentType, ContentTypes.ApplicationJson);
                         }
                     case BodyType.FormData: 
-                        #if (js && !nodejs) 
+                        #if (!nodejs) 
 
                         var formFields = request.toMap();
                         if (restRequest.queryParams == null) {
