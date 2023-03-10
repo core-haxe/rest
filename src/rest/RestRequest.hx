@@ -22,6 +22,28 @@ class RestRequest {
         headers.set(name, value);
     }
 
+    public function param(name:String, defaultValue:Any = null):Any {
+        if (queryParams == null) {
+            return defaultValue;
+        }
+        var v = defaultValue;
+        if (queryParams.exists(name)) {
+            v = queryParams.get(name);
+        }
+        return v;
+    }
+
+    public function paramInt(name:String, defaultValue:Null<Int> = null):Null<Int> {
+        if (queryParams == null) {
+            return defaultValue;
+        }
+        var v = defaultValue;
+        if (queryParams.exists(name)) {
+            v = Std.parseInt(Std.string(queryParams.get(name)));
+        }
+        return v;
+    }
+
     public function clone():RestRequest {
         var c = new RestRequest();
         c.verb = this.verb;

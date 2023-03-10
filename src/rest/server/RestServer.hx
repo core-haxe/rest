@@ -46,6 +46,10 @@ class RestServer {
             }
 
             var restRequest = new RestRequest();
+            if (restRequest.queryParams == null) {
+                restRequest.queryParams = [];
+            }
+            mergeMap(restRequest.queryParams, routeInfo.varValues);
             var restResponse = new RestResponse();
             restResponse.httpStatus = HttpStatus.Success;
             routeInfo.fn(restRequest, restResponse).then((restResponse) -> {
@@ -118,6 +122,12 @@ class RestServer {
             path = path.substring(path.length - 1);
         }
         return path.split("/");
+    }
+
+    private static function mergeMap(target:Map<String, Any>, source:Map<String, Any>) {
+        for (k in source.keys()) {
+            target.set(k, source.get(k));
+        }
     }
 }
 
