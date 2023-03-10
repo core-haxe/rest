@@ -1,7 +1,7 @@
 package rest.macros;
 
-import haxe.macro.Expr;
 import haxe.macro.Context;
+import haxe.macro.Expr;
 
 using StringTools;
 
@@ -11,7 +11,8 @@ class Json2ObjectParser {
         findOrAddConstructor(fields);
 
         var parseFn = findOrAddParse(fields);
-
+        var toStringFn = findOrAddToString(fields);
+        
         var localClass = Context.getLocalClass();
         var parts = localClass.toString().split(".");
         var s = parts.pop();
@@ -45,6 +46,19 @@ class Json2ObjectParser {
                                 case _:
                             }
                         }
+                    case _:    
+                }
+            }
+            case _:
+        }
+
+        switch (toStringFn.kind) {
+            case FFun(f): {
+                switch (f.expr.expr) {
+                    case EBlock(exprs):
+                        exprs.push(macro var writer = new json2object.JsonWriter<$type>());
+                        exprs.push(macro var json = writer.write(this));
+                        exprs.push(macro return json);
                     case _:    
                 }
             }
@@ -98,6 +112,32 @@ class Json2ObjectParser {
                     }],
                     expr: macro {
                     }
+                }),
+                pos: Context.currentPos()
+            }
+            fields.push(fn);
+        }
+
+        return fn;
+    }
+
+    private static function findOrAddToString(fields:Array<Field>):Field {
+        var fn:Field = null;
+        for (field in fields) {
+            if (field.name == "toString") {
+                fn = field;
+            }
+        }
+        
+        if (fn == null) {
+            fn = {
+                name: "toString",
+                access: [APrivate],
+                kind: FFun({
+                    args:[],
+                    expr: macro {
+                    },
+                    ret: macro: String,
                 }),
                 pos: Context.currentPos()
             }
