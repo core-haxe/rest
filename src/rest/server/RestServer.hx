@@ -32,6 +32,10 @@ class RestServer {
         });
     }
 
+    public function serveFilesFrom(dir:String) {
+        _httpServer.serveFilesFrom(dir);
+    }
+
     private function onRequest(httpRequest:HttpRequest, httpResponse:HttpResponse):Promise<HttpResponse> {
         return new Promise((resolve, reject) -> {
             var routeInfo = findRouteInfo(httpRequest.method, httpRequest.url.path);
