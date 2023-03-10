@@ -14,12 +14,20 @@ class RestError {
         }
     }
 
-    public var httpStatus(get, null):Null<Int>;
+    private var _httpStatus:Null<Int> = null;
+    public var httpStatus(get, set):Null<Int>;
     private function get_httpStatus():Null<Int> {
+        if (_httpStatus != null) {
+            return _httpStatus;
+        }
         if (httpError == null) {
             return null;
         }
         return httpError.httpStatus;
+    }
+    private function set_httpStatus(value:Null<Int>):Null<Int> {
+        _httpStatus = value;
+        return value;
     }
 
     private var _message:String;
