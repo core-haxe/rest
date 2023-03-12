@@ -1,11 +1,11 @@
 package rest;
 
-import http.HttpError;
-import http.Url;
-import http.HttpRequest;
-import promises.Promise;
 import http.HttpClient;
+import http.HttpError;
+import http.HttpRequest;
+import http.Url;
 import logging.Logger;
+import promises.Promise;
 
 using StringTools;
 

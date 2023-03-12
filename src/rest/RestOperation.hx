@@ -1,13 +1,13 @@
 package rest;
 
-import haxe.io.Bytes;
-import http.StandardHeaders;
-import haxe.Json;
-import http.ContentTypes;
-import haxe.http.HttpMethod;
-import http.HttpMethod;
-import promises.Promise;
 import haxe.Constraints.Constructible;
+import haxe.Json;
+import haxe.http.HttpMethod;
+import haxe.io.Bytes;
+import http.ContentTypes;
+import http.HttpMethod;
+import http.StandardHeaders;
+import promises.Promise;
 
 using StringTools;
 
