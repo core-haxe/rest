@@ -18,6 +18,7 @@ class TestAll {
             runner.addCase(new TestServerUntyped());
             runner.addCase(new TestAutoBuiltServerApiSingleLevel());
             runner.addCase(new TestAutoBuiltServerApiMultipleLevels());
+            runner.addCase(new TestFibonacci());
         #end
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
