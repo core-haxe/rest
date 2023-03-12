@@ -4,6 +4,7 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
 import haxe.macro.Type.ClassType;
+import haxe.macro.Type.ClassField;
 import haxe.macro.Type.Ref;
 import haxe.macro.Type.TVar;
 import haxe.macro.TypeTools;
@@ -140,146 +141,185 @@ class RestServerBuilder {
                     if (t.get().superClass.t.toString() == "rest.RestApi") {
                         buildApiCalls(t.get(), fields, mappings, calls, f.name);
                     }
-                case TFun(args, ret):    
-                    var method = null;
-                    var path = null;
-
-                    for (m in f.meta.get()) {
-                        if (m.name == ":get") {
-                            method = "get";
-                            path = ExprTools.toString(m.params[0]);
-                            path = path.replace("\"", "");
-                            path = path.replace("'", "");
-                        }
+                case TFun(args, ret): 
+                    buildApiCallFn(f, fields, mappings, calls, prefix, args);   
+                case TLazy(fn):
+                    var r = fn();
+                    switch (r) {
+                        case TFun(args, ret):
+                            buildApiCallFn(f, fields, mappings, calls, prefix, args);   
+                        case _:    
+                            trace(fn);
                     }
-
-                    if (path == null || method == null) {
-                        continue;
-                    }
-
-                    var objectName = "_" + prefix;
-                    var fieldName = f.name;
-                    var functionExpr = null;
-                    
-                    if (args.length > 0) {
-                        var callSite = macro $i{objectName}.$fieldName;
-                        
-                        // build up call request infor
-                        var callRequestTypeString = null;
-                        var callRequestVars:Array<{name:String, type:String}> = [];
-                        switch(args[0].t) {
-                            case TInst(t, params):
-                                for (ff in t.get().fields.get()) {
-                                    switch (ff.kind) {
-                                        case FVar(read, write):
-                                            callRequestVars.push({
-                                                name: ff.name,
-                                                type: TypeTools.toString(ff.type)
-                                            });
-                                        case _:    
-                                    }
-                                }
-                                callRequestTypeString = t.toString();
-                            case _:
-                        }
-
-                        var callRequestFields = [];
-                        for (requestVar in callRequestVars) {
-                            switch (requestVar.type) {
-                                case "Int":
-                                    callRequestFields.push({ field: requestVar.name, expr: macro request.paramInt($v{requestVar.name}) });
-                                case _:
-                                callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
-                            }
-                        }
-                        var callRequestExpr = {
-                            expr: EObjectDecl(callRequestFields),
-                            pos: Context.currentPos()
-                        }
-
-                        var callRequestParts = callRequestTypeString.split(".");
-                        var callRequestTypeName = callRequestParts.pop();
-                        var callRequestType = TPath({
-                            pack: callRequestParts,
-                            name: callRequestTypeName
-                        });
-
-                        functionExpr = macro {
-                            return new promises.Promise((resolve, reject) -> {
-                                var callRequest:$callRequestType = $callRequestExpr;
-                                $callSite(callRequest).then(callResponse -> {                                            
-                                    if ((callResponse is rest.IJson2ObjectParsable)) {
-                                        var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
-                                        var jsonString = @:privateAccess jsonParsableResponse.toString();
-                                        response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
-                                        if (jsonString != null) {
-                                            response.write(jsonString);
-                                        }
-                                        resolve(response);
-                                    } else {
-                                        reject("Unknown response type");
-                                    }
-                                }, error -> {
-                                    reject(error);
-                                });
-                            });
-                        }
-                    } else {
-                        var callSite = macro $i{fieldName};
-                        
-                        functionExpr = macro {
-                            return new promises.Promise((resolve, reject) -> {
-                                $callSite().then(callResponse -> {                                            
-                                    if ((callResponse is rest.IJson2ObjectParsable)) {
-                                        var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
-                                        var jsonString = @:privateAccess jsonParsableResponse.toString();
-                                        response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
-                                        if (jsonString != null) {
-                                            response.write(jsonString);
-                                        }
-                                        resolve(response);
-                                    } else {
-                                        reject("Unknown response type");
-                                    }
-                                }, error -> {
-                                    reject(error);
-                                });
-                            });
-                        }
-                    }
-
-                    var callName = "_" + f.name;
-                    if (prefix != null) {
-                        callName = "_" + prefix + "_" + f.name;
-                    }
-                    var proxyCall:Field = {
-                        name: callName,
-                        access: [APrivate],
-                        kind: FFun({
-                            args: [{
-                                name: "request",
-                                type: macro: rest.RestRequest
-                            },{
-                                name: "response",
-                                type: macro: rest.RestResponse
-                            }],
-                            expr: functionExpr,
-                            ret: macro: promises.Promise<rest.RestResponse>
-                        }),
-                        pos: Context.currentPos()
-                    }
-
-                    fields.push(proxyCall);
-                    calls.push({
-                        path: path,
-                        method: method,
-                        callName: f.name,
-                        proxyCallName: proxyCall.name
-                    });
                 case _:    
                     trace(f);
             }
         }
+    }
+
+    private static function buildApiCallFn(f:ClassField, fields:Array<Field>, mappings:Map<String, String>, calls:Array<RestServerCallInfo>, prefix:String, args:Array<{name:String, opt:Bool, t:haxe.macro.Type}>) {
+        var method = null;
+        var path = null;
+
+        for (m in f.meta.get()) {
+            if (m.name == ":get") {
+                method = "get";
+                path = ExprTools.toString(m.params[0]);
+                path = path.replace("\"", "");
+                path = path.replace("'", "");
+            }
+        }
+
+        if (path == null || method == null) {
+            return;
+        }
+
+        var objectName = "_" + prefix;
+        if (prefix == null) {
+            objectName = null;
+        }
+        var fieldName = f.name;
+        var functionExpr = null;
+        
+        if (args.length > 0) {
+            var callSite = macro $i{fieldName};
+            if (objectName != null) {
+                callSite = macro $i{objectName}.$fieldName;
+            }
+            
+            // build up call request info
+            var callRequestTypeString = null;
+            var callRequestVars:Array<{name:String, type:String}> = [];
+            switch(args[0].t) {
+                case TInst(t, params):
+                    for (ff in t.get().fields.get()) {
+                        switch (ff.kind) {
+                            case FVar(read, write):
+                                callRequestVars.push({
+                                    name: ff.name,
+                                    type: TypeTools.toString(ff.type)
+                                });
+                            case _:    
+                        }
+                    }
+                    callRequestTypeString = t.toString();
+                case _:
+            }
+
+            var callRequestFields = [];
+            for (requestVar in callRequestVars) {
+                switch (requestVar.type) {
+                    case "Int":
+                        callRequestFields.push({ field: requestVar.name, expr: macro request.paramInt($v{requestVar.name}) });
+                    case _:
+                    callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
+                }
+            }
+            var callRequestExpr = {
+                expr: EObjectDecl(callRequestFields),
+                pos: Context.currentPos()
+            }
+
+            var callRequestParts = callRequestTypeString.split(".");
+            var callRequestTypeName = callRequestParts.pop();
+            var callRequestType = TPath({
+                pack: callRequestParts,
+                name: callRequestTypeName
+            });
+
+            functionExpr = macro {
+                return new promises.Promise((resolve, reject) -> {
+                    var callRequest:$callRequestType = $callRequestExpr;
+                    $callSite(callRequest).then(callResponse -> {                                            
+                        if ((callResponse is rest.IJson2ObjectParsable)) {
+                            var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
+                            var jsonString = @:privateAccess jsonParsableResponse.toString();
+                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
+                            if (jsonString != null) {
+                                response.write(jsonString);
+                            }
+                            resolve(response);
+                        } else {
+                            reject("Unknown response type");
+                        }
+                    }, error -> {
+                        // TODO: might need to be more clever here
+                        if ((error is rest.IParsableError)) {
+                            var restError = new rest.RestError();
+                            restError.httpStatus = error.httpStatus;
+                            restError.message = error.message;
+                            restError.body = error.body;
+                            reject(restError);
+                        } else {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+        } else {
+            var callSite = macro $i{fieldName};
+            if (objectName != null) {
+                callSite = macro $i{objectName}.$fieldName;
+            }
+            
+            functionExpr = macro {
+                return new promises.Promise((resolve, reject) -> {
+                    $callSite().then(callResponse -> {                                            
+                        if ((callResponse is rest.IJson2ObjectParsable)) {
+                            var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
+                            var jsonString = @:privateAccess jsonParsableResponse.toString();
+                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
+                            if (jsonString != null) {
+                                response.write(jsonString);
+                            }
+                            resolve(response);
+                        } else {
+                            reject("Unknown response type");
+                        }
+                    }, error -> {
+                        // TODO: might need to be more clever here
+                        if ((error is rest.IParsableError)) {
+                            var restError = new rest.RestError();
+                            restError.httpStatus = error.httpStatus;
+                            restError.message = error.message;
+                            restError.body = error.body;
+                            reject(restError);
+                        } else {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+        }
+
+        var callName = "_" + f.name;
+        if (prefix != null) {
+            callName = "_" + prefix + "_" + f.name;
+        }
+        var proxyCall:Field = {
+            name: callName,
+            access: [APrivate],
+            kind: FFun({
+                args: [{
+                    name: "request",
+                    type: macro: rest.RestRequest
+                },{
+                    name: "response",
+                    type: macro: rest.RestResponse
+                }],
+                expr: functionExpr,
+                ret: macro: promises.Promise<rest.RestResponse>
+            }),
+            pos: Context.currentPos()
+        }
+
+        fields.push(proxyCall);
+        calls.push({
+            path: path,
+            method: method,
+            callName: f.name,
+            proxyCallName: proxyCall.name
+        });
     }
 }
 

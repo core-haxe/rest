@@ -16,7 +16,7 @@ class RestApi<TError:Constructible<Void->Void> & IParsableError> {
     }
 
     private var _useAlternateConfig:Bool = false;
-    private var useAlternateConfig(get, set):Bool;
+    public var useAlternateConfig(get, set):Bool;
     private function get_useAlternateConfig():Bool {
         if (parentApi == null) {
             return _useAlternateConfig;

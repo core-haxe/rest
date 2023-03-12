@@ -112,10 +112,15 @@ class RestOperation<TRequest:IMappable,
                     reject(error);
                 }
                 resolve(response);
-            }, (restError:RestError) -> {
-                var error = new TError();
-                error.parse(restError);
-                reject(error);
+            }, error -> {
+                if ((error is RestError)) {
+                    var restError = cast(error, RestError);
+                    var error = new TError();
+                    error.parse(restError);
+                    reject(error);
+                } else {
+                    reject(error);
+                }
             });
         });
     }
