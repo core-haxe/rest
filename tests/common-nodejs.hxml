@@ -1,3 +1,6 @@
+--cmd pwd
+--next
+
 --class-path .
 --main TestAll
 
