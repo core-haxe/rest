@@ -1,0 +1,8 @@
+--class-path .
+--main TestAll
+
+-lib utest
+-lib rest
+-lib hxnodejs
+-lib json2object
+-D no-deprecation-warnings
