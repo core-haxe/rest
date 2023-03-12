@@ -79,7 +79,7 @@ operation.call(product).then(result -> { // "result" is of type "Product"
 
 ```
 
-# auto built api (typed)
+# auto built client api (typed)
 
 ```haxe
 @:structInit
@@ -133,6 +133,46 @@ api.products.add(product).then(result -> { // "result" is of type "Product"
     // error
 });
 
+```
+
+# auto built server api (typed)
+using the api we defined previously, it is now possible to use that api definition to build a fully typed rest server where all these is needed is building the functions that perform the server business logic, eg:
+
+```haxe
+@:mapping([
+    products => TestDummyServerProducts // this tells the system to use functions on this class when a sub api is used
+])
+private class TestDummyServer extends RestServerApi<DummyJsonApi> {
+}
+
+private class TestDummyServerProducts {
+    public function new() {
+    }
+    
+    public function list():Promise<ProductList> {
+        return new Promise((resolve, reject) -> {
+            var list = new ProductList();
+            ...
+            resolve(list);
+        }
+    }
+    
+    public function get(request:GetProductRequest):Promise<Product> {
+        return new Promise((resolve, reject) -> {
+            var product = new Product();
+            ...
+            resolve(product);
+        }
+    }
+    
+    public function search(request:SearchProductRequest):Promise<ProductList> {
+        return new Promise((resolve, reject) -> {
+            var list = new ProductList();
+            ...
+            resolve(list);
+        }
+    }
+}
 ```
 
 # basic usage (untyped)
