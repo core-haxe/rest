@@ -33,5 +33,5 @@ jobs:
         haxelib dev http http
         git clone https://github.com/core-haxe/rest
         haxelib dev rest rest
-        mkdir -p rest/rest/target
-        cd rest/rest/target && npm install form-data
+        mkdir -p target
+        cd target && npm install form-data
