@@ -1,4 +1,4 @@
---cmd pwd
+--cmd pwd && ls -l
 --next
 
 --class-path .
