@@ -223,3 +223,58 @@ client.makeRequest(request).then(result -> {
 });
 
 ```
+
+# putting it all together (fibonacci client / server api)
+```haxe
+// basic api parts
+class FibonacciError implements IParsableError {
+}
+
+@:structInit
+class GenerateRequest implements IMappableAuto {
+    public var count:Int;
+}
+
+class GenerateResponse implements IJson2ObjectParsable {
+    public var numbers:Array<Int>;
+}
+
+@:config({
+    baseAddress: "http://localhost:1234/"
+})
+class FibonacciApi extends RestApi<FibonacciError> {
+    @:get("/generate/{count}", GenerateResponse)   public function generate(request:GenerateRequest);
+}
+
+// server creation / impl
+class FibonacciServer extends RestServerApi<FibonacciApi> {
+    public function generate(request:GenerateRequest):Promise<GenerateResponse> {
+        return new Promise((resolve, reject) -> {
+            var response = new GenerateResponse();
+            response.numbers = [];
+            var n1 = 0, n2 = 1, nextTerm;
+            for (_ in 0...request.count) {
+                response.numbers.push(n1);
+                nextTerm = n1 + n2;
+                n1 = n2;
+                n2 = nextTerm;
+            }
+            resolve(response);
+        });
+    }
+}
+
+...
+
+testServer = new FibonacciServer();
+testServer.start(1234);
+
+...
+
+// client usage
+var api = new FibonacciApi();
+api.generate({count: 10}).then(response -> {
+    // response.numbers = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+}, (error:FibonacciError) -> {
+});
+```
