@@ -14,6 +14,11 @@ class TestAll {
         runner.addCase(new TestAutoMappingParsing());
         runner.addCase(new TestAutoBuiltApiSingleLevel());
         runner.addCase(new TestAutoBuiltApiMultipleLevels());
+        #if nodejs // currently on server impl for nodejs
+            runner.addCase(new TestServerUntyped());
+            runner.addCase(new TestAutoBuiltServerApiSingleLevel());
+            runner.addCase(new TestAutoBuiltServerApiMultipleLevels());
+        #end
 
         Report.create(runner, SuccessResultsDisplayMode.AlwaysShowSuccessResults, HeaderDisplayMode.NeverShowHeader);
         runner.run();

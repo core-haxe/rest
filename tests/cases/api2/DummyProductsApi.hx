@@ -15,6 +15,9 @@ this is mainly to make sure the generation macros are behaving
 @:config({
     baseAddress: "https://dummyjson.com/"
 })
+@:alternateConfig({
+    baseAddress: "http://localhost:7876/"
+})
 class DummyProductsApi extends RestApi<DummyError> {
     @:get( "/products",                  ProductList)   public function list();
     @:get( "/products/{id}",             Product)       public function get(request:GetProductRequest);
