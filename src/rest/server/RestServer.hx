@@ -32,6 +32,10 @@ class RestServer {
         });
     }
 
+    public function clearRoutes() {
+        _routes = [];
+    }
+
     public function serveFilesFrom(dir:String) {
         _httpServer.serveFilesFrom(dir);
     }
