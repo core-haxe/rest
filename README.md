@@ -239,9 +239,6 @@ class GenerateResponse implements IJson2ObjectParsable {
     public var numbers:Array<Int>;
 }
 
-@:config({
-    baseAddress: "http://localhost:1234/"
-})
 class FibonacciApi extends RestApi<FibonacciError> {
     @:get("/generate/{count}", GenerateResponse)   public function generate(request:GenerateRequest);
 }
@@ -272,7 +269,10 @@ testServer.start(1234);
 ...
 
 // client usage
-var api = new FibonacciApi();
+var client = new RestClient({
+    baseAddress: "http://localhost:1234/"
+});
+var api = new FibonacciApi(client);
 api.generate({count: 10}).then(response -> {
     // response.numbers = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 }, (error:FibonacciError) -> {
