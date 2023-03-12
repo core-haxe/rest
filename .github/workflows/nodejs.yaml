@@ -33,5 +33,5 @@ jobs:
         haxelib dev http http
         git clone https://github.com/core-haxe/rest
         haxelib dev rest rest
-        copy tests/package.json target
-        copy tests/package-lock.json target
+        cp tests/package.json target
+        cp tests/package-lock.json target
