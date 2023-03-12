@@ -32,6 +32,14 @@ class RestServer {
         });
     }
 
+    public function post(path:String, fn:RestFunction) {
+        _routes.push({
+            method: "post",
+            path: path,
+            fn: fn
+        });
+    }
+
     public function clearRoutes() {
         _routes = [];
     }
