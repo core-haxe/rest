@@ -35,3 +35,4 @@ jobs:
         haxelib dev rest rest
         mkdir -p target
         cd target && npm install form-data
+        cd target && ls
