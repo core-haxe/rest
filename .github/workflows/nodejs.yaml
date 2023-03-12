@@ -33,6 +33,6 @@ jobs:
         haxelib dev http http
         git clone https://github.com/core-haxe/rest
         haxelib dev rest rest
-        cp tests/package.json target
-        cp tests/package-lock.json target
-        cd target && npm install
+        cp -f tests/package.json .
+        cp -f tests/package-lock.json .
+        npm install
