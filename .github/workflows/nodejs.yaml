@@ -35,3 +35,4 @@ jobs:
         haxelib dev rest rest
         cp tests/package.json target
         cp tests/package-lock.json target
+        cd target && npm install
