@@ -5,7 +5,7 @@
 
 # rest
 
-rest client supporting fully typed rest operations
+rest client and server supporting fully typed rest operations
 
 # features
 
