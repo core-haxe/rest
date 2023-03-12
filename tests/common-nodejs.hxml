@@ -1,6 +1,3 @@
---cmd cd target && pwd && ls -l
---next
-
 --class-path .
 --main TestAll
 
