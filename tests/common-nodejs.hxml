@@ -1,4 +1,4 @@
---cmd pwd && ls -l
+--cmd cd target && pwd && ls -l
 --next
 
 --class-path .
