@@ -53,6 +53,7 @@ class RestServer {
             if (restRequest.queryParams == null) {
                 restRequest.queryParams = [];
             }
+            mergeMap(restRequest.queryParams, httpRequest.queryParams);
             mergeMap(restRequest.queryParams, routeInfo.varValues);
             var restResponse = new RestResponse();
             restResponse.httpStatus = HttpStatus.Success;
