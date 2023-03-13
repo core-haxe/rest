@@ -112,6 +112,22 @@ class TestAutoBuiltServerApiSingleLevel extends Test {
             Assert.fail();
         });
     }
+
+    function testPost(async:Async) {
+        var api = new DummyProductsApi();
+        api.useAlternateConfig = true;
+        var newProduct = new Product();
+        newProduct.id = 6666;
+        newProduct.title = "This is product 6666";
+        api.add(newProduct).then(product -> {
+            Assert.notNull(product);
+            Assert.equals(6666, product.id);
+            Assert.equals("This is product 6666", product.title);
+            async.done();
+        }, (error:DummyError) -> {
+            Assert.fail();
+        });
+    }
 }
 
 private class TestDummyServer extends RestServerApi<DummyProductsApi> {
@@ -182,5 +198,14 @@ private class TestDummyServer extends RestServerApi<DummyProductsApi> {
                 throw "invalid search query";
             }
         }); 
+    }
+
+    public function add(product:Product):Promise<Product> {
+        return new Promise((resolve, reject) -> {
+            var fakeProduct = new Product();
+            fakeProduct.id = product.id;
+            fakeProduct.title = product.title;
+            resolve(fakeProduct);
+        });
     }
 }
