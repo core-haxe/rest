@@ -3,8 +3,8 @@ package rest.macros;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
-import haxe.macro.Type.ClassType;
 import haxe.macro.Type.ClassField;
+import haxe.macro.Type.ClassType;
 import haxe.macro.Type.Ref;
 import haxe.macro.Type.TVar;
 import haxe.macro.TypeTools;
@@ -57,6 +57,7 @@ class RestServerBuilder {
                 name: varName,
                 kind: FVar(macro: $tt),
                 access: [APrivate],
+                meta: [{name: ":noCompletion", pos: Context.currentPos()}],
                 pos: Context.currentPos()
             });
     
@@ -66,6 +67,7 @@ class RestServerBuilder {
         fields.push({
             name: "_restServer",
             kind: FVar(macro: rest.server.RestServer),
+            meta: [{name: ":noCompletion", pos: Context.currentPos()}],
             pos: Context.currentPos()
         });
 
@@ -75,6 +77,8 @@ class RestServerBuilder {
         for (call in calls) {
             if (call.method == "get") {
                 routeExprs.push(macro _restServer.get($v{call.path}, $i{call.proxyCallName}));
+            } else if (call.method == "post") {
+                routeExprs.push(macro _restServer.post($v{call.path}, $i{call.proxyCallName}));
             }
         }
 
@@ -161,12 +165,24 @@ class RestServerBuilder {
         var method = null;
         var path = null;
 
+        var requestType = null;
         for (m in f.meta.get()) {
             if (m.name == ":get") {
                 method = "get";
                 path = ExprTools.toString(m.params[0]);
                 path = path.replace("\"", "");
                 path = path.replace("'", "");
+            } else if (m.name == ":post") {
+                method = "post";
+                path = ExprTools.toString(m.params[0]);
+                path = path.replace("\"", "");
+                path = path.replace("'", "");
+            }
+
+            if (m.params[2] != null) {
+                if (ExprTools.toString(m.params[2]).toLowerCase() == "json") {
+                    requestType = "json";
+                }
             }
         }
 
@@ -206,18 +222,24 @@ class RestServerBuilder {
                 case _:
             }
 
-            var callRequestFields = [];
-            for (requestVar in callRequestVars) {
-                switch (requestVar.type) {
-                    case "Int":
-                        callRequestFields.push({ field: requestVar.name, expr: macro request.paramInt($v{requestVar.name}) });
-                    case _:
-                    callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
+            var callRequestExpr:Expr = null;
+            if (requestType == "json") {
+                // TODO: use json2object
+                callRequestExpr = macro haxe.Json.parse(request.body);
+            } else {
+                var callRequestFields = [];
+                for (requestVar in callRequestVars) {
+                    switch (requestVar.type) {
+                        case "Int":
+                            callRequestFields.push({ field: requestVar.name, expr: macro request.paramInt($v{requestVar.name}) });
+                        case _:
+                        callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
+                    }
                 }
-            }
-            var callRequestExpr = {
-                expr: EObjectDecl(callRequestFields),
-                pos: Context.currentPos()
+                callRequestExpr = {
+                    expr: EObjectDecl(callRequestFields),
+                    pos: Context.currentPos()
+                }
             }
 
             var callRequestParts = callRequestTypeString.split(".");
@@ -230,7 +252,7 @@ class RestServerBuilder {
             functionExpr = macro {
                 return new promises.Promise((resolve, reject) -> {
                     var callRequest:$callRequestType = $callRequestExpr;
-                    $callSite(callRequest).then(callResponse -> {                                            
+                    @:privateAccess $callSite(callRequest).then(callResponse -> {                                            
                         if ((callResponse is rest.IJson2ObjectParsable)) {
                             var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
                             var jsonString = @:privateAccess jsonParsableResponse.toString();
@@ -264,7 +286,7 @@ class RestServerBuilder {
             
             functionExpr = macro {
                 return new promises.Promise((resolve, reject) -> {
-                    $callSite().then(callResponse -> {                                            
+                    @:privateAccess $callSite().then(callResponse -> {                                            
                         if ((callResponse is rest.IJson2ObjectParsable)) {
                             var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
                             var jsonString = @:privateAccess jsonParsableResponse.toString();
@@ -299,6 +321,7 @@ class RestServerBuilder {
         var proxyCall:Field = {
             name: callName,
             access: [APrivate],
+            meta: [{name: ":noCompletion", pos: Context.currentPos()}],
             kind: FFun({
                 args: [{
                     name: "request",

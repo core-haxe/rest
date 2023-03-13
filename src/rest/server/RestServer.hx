@@ -1,13 +1,13 @@
 package rest.server;
 
-import logging.Logger;
 import http.HttpError;
 import http.HttpRequest;
 import http.HttpResponse;
 import http.HttpStatus;
-import http.server.HttpServer;
-import promises.Promise;
 import http.Url;
+import http.server.HttpServer;
+import logging.Logger;
+import promises.Promise;
 
 using StringTools;
 
