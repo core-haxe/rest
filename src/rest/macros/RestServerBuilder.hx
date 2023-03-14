@@ -205,6 +205,7 @@ class RestServerBuilder {
             
             // build up call request info
             var callRequestTypeString = null;
+            var callRequestSubTypeString = null;
             var callRequestVars:Array<{name:String, type:String}> = [];
             switch(args[0].t) {
                 case TInst(t, params):
@@ -218,7 +219,15 @@ class RestServerBuilder {
                             case _:    
                         }
                     }
-                    callRequestTypeString = t.toString();
+                    var module = t.get().module;
+                    var type = t.toString();
+                    
+                    if (module != type) {
+                        callRequestTypeString = module;
+                        callRequestSubTypeString = type.split(".").pop();
+                    } else {
+                        callRequestTypeString = type;
+                    }
                 case _:
             }
 
@@ -246,7 +255,8 @@ class RestServerBuilder {
             var callRequestTypeName = callRequestParts.pop();
             var callRequestType = TPath({
                 pack: callRequestParts,
-                name: callRequestTypeName
+                name: callRequestTypeName,
+                sub: callRequestSubTypeString
             });
 
             functionExpr = macro {
