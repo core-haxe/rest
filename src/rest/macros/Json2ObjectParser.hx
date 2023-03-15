@@ -8,12 +8,14 @@ using StringTools;
 class Json2ObjectParser {
     public static macro function build():Array<Field> {
         var fields = Context.getBuildFields();
-        findOrAddConstructor(fields);
+        var localClass = Context.getLocalClass();
+        var hasSuper = (localClass.get().superClass != null);
+
+        findOrAddConstructor(fields, hasSuper);
 
         var parseFn = findOrAddParse(fields);
         var toStringFn = findOrAddToString(fields);
         
-        var localClass = Context.getLocalClass();
         var parts = localClass.toString().split(".");
         var s = parts.pop();
 
@@ -68,7 +70,7 @@ class Json2ObjectParser {
         return fields;
     }
 
-    private static function findOrAddConstructor(fields:Array<Field>):Field {
+    private static function findOrAddConstructor(fields:Array<Field>, hasSuper:Bool = false):Field {
         var ctor:Field = null;
         for (field in fields) {
             if (field.name == "new") {
@@ -77,13 +79,19 @@ class Json2ObjectParser {
         }
 
         if (ctor == null) {
+            var fnExpr = macro {
+            };
+            if (hasSuper) {
+                fnExpr = macro {
+                    super();
+                };
+            }
             ctor = {
                 name: "new",
                 access: [APublic],
                 kind: FFun({
                     args:[],
-                    expr: macro {
-                    }
+                    expr: fnExpr
                 }),
                 pos: Context.currentPos()
             }
