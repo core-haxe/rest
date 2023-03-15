@@ -42,7 +42,7 @@ class RestOperation<TRequest:IMappable,
             restRequest.path = path;
             restRequest.useAlternateConfig = this.useAlternateConfig;
 
-            if (bodyType != BodyType.None) {
+            if (restRequest.verb != "get" && bodyType != BodyType.None) {
                 switch (bodyType) {
                     case BodyType.Json:
                         restRequest.body = request.toObject();
