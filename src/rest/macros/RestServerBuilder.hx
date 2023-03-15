@@ -197,12 +197,14 @@ class RestServerBuilder {
         var fieldName = f.name;
         var functionExpr = null;
         
+        var callSite = macro $i{fieldName};
+        if (objectName != null) {
+            callSite = macro $i{objectName}.$fieldName;
+        }
+        var callRequest = macro null;
+        var call = macro @:privateAccess $callSite();
+        
         if (args.length > 0) {
-            var callSite = macro $i{fieldName};
-            if (objectName != null) {
-                callSite = macro $i{objectName}.$fieldName;
-            }
-            
             // build up call request info
             var callRequestTypeString = null;
             var callRequestSubTypeString = null;
@@ -259,69 +261,42 @@ class RestServerBuilder {
                 sub: callRequestSubTypeString
             });
 
-            functionExpr = macro {
-                return new promises.Promise((resolve, reject) -> {
-                    var callRequest:$callRequestType = $callRequestExpr;
-                    @:privateAccess $callSite(callRequest).then(callResponse -> {                                            
-                        if ((callResponse is rest.IJson2ObjectParsable)) {
-                            var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
-                            var jsonString = @:privateAccess jsonParsableResponse.toString();
-                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
-                            if (jsonString != null) {
-                                response.write(jsonString);
-                            }
-                            resolve(response);
-                        } else {
-                            reject("Unknown response type");
+            callRequest = macro var callRequest:$callRequestType = $callRequestExpr;
+            call = macro @:privateAccess $callSite(callRequest);
+        }
+
+        var functionExpr = macro {
+            return new promises.Promise((resolve, reject) -> {
+                $callRequest;
+                $call.then(callResponse -> {                                            
+                    if ((callResponse is rest.IJson2ObjectParsable)) {
+                        var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
+                        var jsonString = @:privateAccess jsonParsableResponse.toString();
+                        response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
+                        if (jsonString != null) {
+                            response.write(jsonString);
                         }
-                    }, error -> {
-                        // TODO: might need to be more clever here
-                        if ((error is rest.IParsableError)) {
-                            var restError = new rest.RestError();
-                            restError.httpStatus = error.httpStatus;
-                            restError.message = error.message;
-                            restError.body = error.body;
-                            reject(restError);
-                        } else {
-                            reject(error);
-                        }
-                    });
+                        resolve(response);
+                    } else if (callResponse is Array) {
+                        var s = Std.string(callResponse);
+                        response.write(s);
+                        resolve(response);
+                    } else {
+                        reject("Unknown response type");
+                    }
+                }, error -> {
+                    // TODO: might need to be more clever here
+                    if ((error is rest.IParsableError)) {
+                        var restError = new rest.RestError();
+                        restError.httpStatus = error.httpStatus;
+                        restError.message = error.message;
+                        restError.body = error.body;
+                        reject(restError);
+                    } else {
+                        reject(error);
+                    }
                 });
-            }
-        } else {
-            var callSite = macro $i{fieldName};
-            if (objectName != null) {
-                callSite = macro $i{objectName}.$fieldName;
-            }
-            
-            functionExpr = macro {
-                return new promises.Promise((resolve, reject) -> {
-                    @:privateAccess $callSite().then(callResponse -> {                                            
-                        if ((callResponse is rest.IJson2ObjectParsable)) {
-                            var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
-                            var jsonString = @:privateAccess jsonParsableResponse.toString();
-                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
-                            if (jsonString != null) {
-                                response.write(jsonString);
-                            }
-                            resolve(response);
-                        } else {
-                            reject("Unknown response type");
-                        }
-                    }, error -> {
-                        // TODO: might need to be more clever here
-                        if ((error is rest.IParsableError)) {
-                            var restError = new rest.RestError();
-                            restError.httpStatus = error.httpStatus;
-                            restError.message = error.message;
-                            restError.body = error.body;
-                            reject(restError);
-                        } else {
-                            reject(error);
-                        }
-                    });
-                });
-            }
+            });
         }
 
         var callName = "_" + f.name;
