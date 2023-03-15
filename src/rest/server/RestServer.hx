@@ -94,7 +94,7 @@ class RestServer {
         return new Promise((resolve, reject) -> {
             var routeInfo = findRouteInfo(httpRequest.method, httpRequest.url.path);
             if (routeInfo == null) {
-                log.error('could not find route for "${httpRequest.url.path}"');
+                log.error('could not find route for "${httpRequest.method}" "${httpRequest.url.path}"');
                 httpResponse.httpStatus = HttpStatus.NotFound;
                 resolve(httpResponse);
                 return;
