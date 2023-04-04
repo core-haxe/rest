@@ -86,17 +86,27 @@ class RestServer {
         _routes = [];
     }
 
-    public function serveFilesFrom(dir:String) {
-        _httpServer.serveFilesFrom(dir);
+    public function serveFilesFrom(prefix:String, dir:String) {
+        _httpServer.serveFilesFrom(prefix, dir);
     }
 
     private function onRequest(httpRequest:HttpRequest, httpResponse:HttpResponse):Promise<HttpResponse> {
         return new Promise((resolve, reject) -> {
             var routeInfo = findRouteInfo(httpRequest.method, httpRequest.url.path);
             if (routeInfo == null) {
-                log.error('could not find route for "${httpRequest.method}" "${httpRequest.url.path}"');
-                httpResponse.httpStatus = HttpStatus.NotFound;
-                resolve(httpResponse);
+                // TODO: make optional / restricted
+                if (httpRequest.method == "options") {
+                    if (httpResponse.headers == null) {
+                        httpResponse.headers = [];
+                    }
+                    httpResponse.headers.set("Access-Control-Allow-Origin", "*");
+                    httpResponse.headers.set("Access-Control-Allow-Headers", "*");
+                    resolve(httpResponse);
+                } else {
+                    log.error('could not find route for "${httpRequest.method}" "${httpRequest.url.path}"');
+                    httpResponse.httpStatus = HttpStatus.NotFound;
+                    resolve(httpResponse);
+                }
                 return;
             }
 
@@ -123,6 +133,12 @@ class RestServer {
             routeInfo.fn(restRequest, restResponse).then((restResponse) -> {
                 httpResponse.httpStatus = restResponse.httpStatus;
                 httpResponse.headers = restResponse.headers;
+                if (httpResponse.headers == null) {
+                    httpResponse.headers = [];
+                }
+                // TODO: make optional / restricted
+                httpResponse.headers.set("Access-Control-Allow-Origin", "*");
+                httpResponse.headers.set("Access-Control-Allow-Headers", "*");
                 httpResponse.body = restResponse.body;
                 resolve(httpResponse);
             }, error -> {
