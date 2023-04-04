@@ -52,7 +52,7 @@ class RestServerBuilder {
             };
             var tt = TPath(t);
 
-            var varName = "_" + k;
+            var varName = k;
             fields.push({
                 name: varName,
                 kind: FVar(macro: $tt),
@@ -190,7 +190,7 @@ class RestServerBuilder {
             return;
         }
 
-        var objectName = "_" + prefix;
+        var objectName = prefix;
         if (prefix == null) {
             objectName = null;
         }
