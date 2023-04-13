@@ -293,7 +293,7 @@ class RestServerBuilder {
                         restError.body = error.body;
                         reject(restError);
                     } else {
-                        reject(error);
+                        reject(cast error);
                     }
                 });
             });
