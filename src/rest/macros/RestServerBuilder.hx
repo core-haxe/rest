@@ -142,7 +142,7 @@ class RestServerBuilder {
         for (f in apiClass.fields.get()) {
             switch (f.type) {
                 case TInst(t, params):
-                    if (t.get().superClass.t.toString() == "rest.RestApi") {
+                    if (t.get().superClass != null && t.get().superClass.t.toString() == "rest.RestApi") {
                         buildApiCalls(t.get(), fields, mappings, calls, f.name);
                     }
                 case TFun(args, ret): 
@@ -199,6 +199,10 @@ class RestServerBuilder {
         
         var callSite = macro $i{fieldName};
         if (objectName != null) {
+            if (!mappings.exists(objectName)) {
+                Sys.println("[warning] no server mapping found for sub api '" + objectName + "', use the following in server class:\n    @:mapping([\n        " + objectName + " => ClassThatImplementsRoutes\n    ])");
+                return;
+            }
             callSite = macro $i{objectName}.$fieldName;
         }
         var callRequest = macro null;
