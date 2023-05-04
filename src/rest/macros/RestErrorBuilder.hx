@@ -7,7 +7,7 @@ class RestErrorBuilder {
     public static macro function build():Array<Field> {
         var localClass = Context.getLocalClass();
 
-        var fields = Context.getBuildFields();
+        var fields:Array<Field> = Context.getBuildFields();
         var parseFn = findOrAddParse(fields);
         var toStringFn = findOrAddToString(fields);
 
@@ -33,7 +33,7 @@ class RestErrorBuilder {
             fields.push({
                 name: "httpStatus",
                 access: [APublic],
-                kind: FVar(macro: Int),
+                kind: FVar(macro: Null<Int>),
                 pos: Context.currentPos()
             });
         }
@@ -43,6 +43,31 @@ class RestErrorBuilder {
                 name: "headers",
                 access: [APublic],
                 kind: FVar(macro: Map<String, Any>),
+                pos: Context.currentPos()
+            });
+        }
+
+        if (!hasField(fields, "bodyAsJson")) {
+            fields.push({
+                name: "get_bodyAsJson",
+                access: [APrivate],
+                kind: FFun({
+                    args: [],
+                    expr: macro {
+                        if (this.body == null) {
+                            return null;
+                        }
+                        return haxe.Json.parse(this.body.toString());
+                    },
+                    ret: macro: Dynamic
+                }),
+                pos: Context.currentPos()
+            });
+
+            fields.push({
+                name: "bodyAsJson",
+                access: [APublic],
+                kind: FProp("get", "null", macro: Dynamic),
                 pos: Context.currentPos()
             });
         }
@@ -117,9 +142,13 @@ class RestErrorBuilder {
                     args: [],
                     ret: macro: String,
                     expr: macro {
+                        var bodyString = null;
+                        if (this.body != null) {
+                            bodyString = this.body.toString();
+                        }
                         return haxe.Json.stringify({
                             message: this.message,
-                            body: this.body.toString()
+                            body: bodyString
                         });
                     }
                 }),

@@ -176,7 +176,18 @@ class RestServerBuilder {
                         restError.body = haxe.io.Bytes.ofString(Std.string(error));
                     } else if (error is rest.IParsableError) {
                         var parsableError = cast(error, rest.IParsableError);
-                        restError.body = haxe.io.Bytes.ofString(@:privateAccess parsableError.toString());
+                        if (parsableError.message != null) {
+                            restError.message = parsableError.message;
+                        }
+                        if (parsableError.body != null) {
+                            restError.body = parsableError.body;
+                        }
+                        if (parsableError.httpStatus != null) {
+                            restError.httpStatus = parsableError.httpStatus;
+                        }
+                    } else {
+                        restError.message = Std.string(error);
+                        restError.body = haxe.io.Bytes.ofString(Std.string(error));
                     }
 
                     // we'll convert it to a app defined error and back to rest error for processing

@@ -76,7 +76,8 @@ class TestAutoBuiltServerApiSingleLevel extends Test {
             Assert.fail();
             return null;
         }, (error:DummyError) -> {
-            Assert.equals("product 1111 doesnt exist", error.body.toString());
+            Assert.equals("Error: product 1111 doesnt exist", error.bodyAsJson.message);
+            Assert.equals("Error: product 1111 doesnt exist", error.bodyAsJson.body);
             async.done();
         });
     }
@@ -89,7 +90,7 @@ class TestAutoBuiltServerApiSingleLevel extends Test {
             return null;
         }, (error:DummyError) -> {
             Assert.equals(404, error.httpStatus);
-            Assert.equals("product 1234 doesnt exist", error.body.toString());
+            Assert.equals("product 1234 doesnt exist", error.bodyAsJson.body);
             async.done();
         });
     }
