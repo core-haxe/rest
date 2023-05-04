@@ -145,6 +145,7 @@ class RestServer {
                 if ((error is RestError)) {
                     var restError = cast(error, RestError);
                     var httpError = new HttpError(restError.message, restError.httpStatus);
+                    httpError.headers = restError.headers;
                     httpError.body = restError.body;
                     reject(httpError);
                 } else if ((error is HttpError)) {

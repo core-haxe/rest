@@ -20,8 +20,25 @@ class RestServerBuilder {
             case _: null;    
         }
 
+        var errorClass = null;
+        if (apiClass.get().superClass != null) {
+            errorClass = switch (apiClass.get().superClass.params[0]) {
+                case TInst(t, params):
+                    t;
+                case _: null;    
+            }
+        }
+        var errorClassString = errorClass.toString();
+        var errorClassParts = errorClassString.split(".");
+        var errorClassName = errorClassParts.pop();
+        var errorClassType:TypePath = {
+            pack: errorClassParts,
+            name: errorClassName
+        };
+
         var fields = Context.getBuildFields();
         var ctor = findOrAddConstructor(fields);
+        buildBuildError(fields, errorClassType);
 
         var mappingsMeta = localClass.get().meta.extract(":mapping");
         var mappings:Map<String, String> = [];
@@ -138,6 +155,44 @@ class RestServerBuilder {
         return ctor;
     }
 
+    private static function buildBuildError(fields:Array<Field>, errorClassType:TypePath) {
+        var errorClassTypePath = TPath(errorClassType);
+
+        fields.push({
+            name: "buildError",
+            access: [APrivate],
+            kind: FFun({
+                args: [{
+                    name: "error",
+                    type: macro: Any
+                }],
+                ret: macro: rest.RestError,
+                expr: macro {
+                    var restError = new rest.RestError();
+                    restError.headers = ["Content-Type" => "application/json"];
+                    restError.httpStatus = 500;
+                    if ((error is String)) {
+                        restError.message = Std.string(error);
+                        restError.body = haxe.io.Bytes.ofString(Std.string(error));
+                    } else if (error is rest.IParsableError) {
+                        var parsableError = cast(error, rest.IParsableError);
+                        restError.body = haxe.io.Bytes.ofString(@:privateAccess parsableError.toString());
+                    }
+
+                    // we'll convert it to a app defined error and back to rest error for processing
+                    var apiError = new $errorClassType();
+                    if ((apiError is rest.IParsableError)) {
+                        @:privateAccess apiError.parse(restError);
+                        restError.body = haxe.io.Bytes.ofString(@:privateAccess apiError.toString());
+                    }
+
+                    return restError;
+                }
+            }),
+            pos: Context.currentPos()
+        });
+    }
+    
     private static function buildApiCalls(apiClass:ClassType, fields:Array<Field>, mappings:Map<String, String>, calls:Array<RestServerCallInfo>, prefix:String = null) {
         for (f in apiClass.fields.get()) {
             switch (f.type) {
@@ -248,7 +303,7 @@ class RestServerBuilder {
                         case "Int":
                             callRequestFields.push({ field: requestVar.name, expr: macro request.paramInt($v{requestVar.name}) });
                         case _:
-                        callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
+                            callRequestFields.push({ field: requestVar.name, expr: macro request.param($v{requestVar.name}) });
                     }
                 }
                 callRequestExpr = {
@@ -271,35 +326,33 @@ class RestServerBuilder {
 
         var functionExpr = macro {
             return new promises.Promise((resolve, reject) -> {
-                $callRequest;
-                $call.then(callResponse -> {                                            
-                    if ((callResponse is rest.IJson2ObjectParsable)) {
-                        var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
-                        var jsonString = @:privateAccess jsonParsableResponse.toString();
-                        response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
-                        if (jsonString != null) {
-                            response.write(jsonString);
+                try {
+                    $callRequest;
+                    $call.then(callResponse -> {  
+                        if ((callResponse is rest.IJson2ObjectParsable)) {
+                            var jsonParsableResponse = cast(callResponse, rest.IJson2ObjectParsable);
+                            var jsonString = @:privateAccess jsonParsableResponse.toString();
+                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
+                            if (jsonString != null) {
+                                response.write(jsonString);
+                            }
+                            resolve(response);
+                        } else if (callResponse is Array) {
+                            var s = Std.string(callResponse);
+                            response.headers = [http.StandardHeaders.ContentType => http.ContentTypes.ApplicationJson];
+                            response.write(s);
+                            resolve(response);
+                        } else if (callResponse == null) {
+                            reject(buildError("call '" + $v{f.name} + "' resulted in a null result"));
+                        } else {
+                            reject(buildError("invalid response (" + Type.getClassName(Type.getClass(callResponse)) + ")"));
                         }
-                        resolve(response);
-                    } else if (callResponse is Array) {
-                        var s = Std.string(callResponse);
-                        response.write(s);
-                        resolve(response);
-                    } else {
-                        reject("Unknown response type");
-                    }
-                }, error -> {
-                    // TODO: might need to be more clever here
-                    if ((error is rest.IParsableError)) {
-                        var restError = new rest.RestError();
-                        restError.httpStatus = error.httpStatus;
-                        restError.message = error.message;
-                        restError.body = error.body;
-                        reject(restError);
-                    } else {
-                        reject(cast error);
-                    }
-                });
+                    }, (error:Dynamic) -> {
+                        reject(buildError(error));
+                    });
+                } catch (error:Dynamic) {
+                    reject(buildError(error));
+                }
             });
         }
 

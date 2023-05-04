@@ -9,6 +9,7 @@ class RestErrorBuilder {
 
         var fields = Context.getBuildFields();
         var parseFn = findOrAddParse(fields);
+        var toStringFn = findOrAddToString(fields);
 
         if (!hasField(fields, "message")) {
             fields.push({
@@ -53,7 +54,7 @@ class RestErrorBuilder {
                         exprs.insert(0, macro this.message = error.message);
                         exprs.insert(0, macro this.body = error.body);
                         exprs.insert(0, macro this.httpStatus = error.httpStatus);
-                        exprs.insert(0, macro if (error.httpError != null) this.headers = error.httpError.headers);
+                        exprs.insert(0, macro this.headers = error.headers);
                     case _:    
                 }
             case _:   
@@ -90,6 +91,36 @@ class RestErrorBuilder {
                     }],
                     expr: macro {
                         
+                    }
+                }),
+                pos: Context.currentPos()
+            }
+            fields.push(fn);
+        }
+
+        return fn;
+    }
+
+    private static function findOrAddToString(fields:Array<Field>):Field {
+        var fn:Field = null;
+        for (field in fields) {
+            if (field.name == "toString") {
+                fn = field;
+            }
+        }
+
+        if (fn == null) {
+            fn = {
+                name: "toString",
+                access: [APrivate],
+                kind: FFun({
+                    args: [],
+                    ret: macro: String,
+                    expr: macro {
+                        return haxe.Json.stringify({
+                            message: this.message,
+                            body: this.body.toString()
+                        });
                     }
                 }),
                 pos: Context.currentPos()
