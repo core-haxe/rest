@@ -67,6 +67,30 @@ class Json2ObjectParser {
             case _:
         }
 
+        for (field in fields) {
+            switch (field.kind) {
+                case FVar(t, e):
+                    switch (t) {
+                        case TPath(p):
+                            if (p.name == "Date") {
+                                var expr = macro rest.Json2ObjectHelpers.writeDate;
+                                field.meta.push({
+                                    name: ":jcustomparse",
+                                    params: [macro rest.Json2ObjectHelpers.parseDate],
+                                    pos: Context.currentPos()
+                                });
+                                field.meta.push({
+                                    name: ":jcustomwrite",
+                                    params: [macro rest.Json2ObjectHelpers.writeDate],
+                                    pos: Context.currentPos()
+                                });
+                            }
+                        case _:    
+                    }
+                case _:    
+            }
+        }
+
         return fields;
     }
 
