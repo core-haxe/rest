@@ -40,6 +40,9 @@ class Json2ObjectParser {
 
                         var n = 3;
                         for (field in fields) {
+                            if (field.access.contains(AStatic)) {
+                                continue;
+                            }
                             switch (field.kind) {
                                 case FVar(t, e):
                                     var fieldName = field.name;
