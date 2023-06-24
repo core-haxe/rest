@@ -14,6 +14,9 @@ using StringTools;
 class RestServerBuilder {
     public static macro function build():Array<Field> {
         var localClass = Context.getLocalClass();
+        if (localClass.get().superClass.params[0] == null) {
+            return Context.getBuildFields();
+        }
         var apiClass:Ref<ClassType> = switch (localClass.get().superClass.params[0]) {
             case TInst(t, params):
                 t;
