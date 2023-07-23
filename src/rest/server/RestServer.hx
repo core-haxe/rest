@@ -114,6 +114,7 @@ class RestServer {
             if (restRequest.queryParams == null) {
                 restRequest.queryParams = [];
             }
+            restRequest.path = httpRequest.url.path;
             restRequest.body = httpRequest.body;
             mergeMap(restRequest.queryParams, httpRequest.queryParams);
             mergeMap(restRequest.queryParams, routeInfo.varValues);
