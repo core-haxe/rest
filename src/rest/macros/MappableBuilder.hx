@@ -1,7 +1,7 @@
 package rest.macros;
 
-import haxe.macro.Expr;
 import haxe.macro.Context;
+import haxe.macro.Expr;
 
 @:access(rest.macros.AddDefaultConstructor)
 class MappableBuilder {
