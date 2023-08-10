@@ -41,6 +41,13 @@ class RestResponse {
         buffer.addString(data, encoding);
     }
 
+    public function writeBytes(data:Bytes) {
+        if (buffer == null) {
+            buffer = new BytesBuffer();
+        }
+        buffer.addBytes(data, 0, data.length);
+    }
+
     public var bodyAsString(get, null):String;
     private function get_bodyAsString():String {
         if (body == null) {
