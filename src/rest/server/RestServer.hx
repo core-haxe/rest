@@ -95,7 +95,7 @@ class RestServer {
             var routeInfo = findRouteInfo(httpRequest.method, httpRequest.url.path);
             if (routeInfo == null) {
                 // TODO: make optional / restricted
-                if (httpRequest.method == "options") {
+                if (httpRequest.method == "OPTIONS") {
                     if (httpResponse.headers == null) {
                         httpResponse.headers = [];
                     }
