@@ -89,11 +89,11 @@ class RestClient {
         httpRequest.body = request.body;
 
         return new Promise((resolve, reject) -> {
-            httpClient.makeRequest(httpRequest).then(httpResult -> {
+            httpClient.makeRequest(httpRequest).then(httpResponse -> {
                 var restResponse = new RestResponse();
-                restResponse.httpStatus = httpResult.response.httpStatus;
-                restResponse.headers = httpResult.response.headers;
-                restResponse.body = httpResult.response.body;
+                restResponse.httpStatus = httpResponse.httpStatus;
+                restResponse.headers = httpResponse.headers;
+                restResponse.body = httpResponse.body;
                 resolve(new RestResult(this, restResponse));
             }, (httpError:HttpError) -> {
                 var restError = new RestError(httpError);
