@@ -45,7 +45,7 @@ class RestOperation<TRequest:IMappable,
             if (restRequest.verb != "get" && bodyType != BodyType.None) {
                 switch (bodyType) {
                     case BodyType.Json:
-                        restRequest.body = request.toObject();
+                        if (request != null) restRequest.body = request.toObject();
                         if (restRequest.headers == null) {
                             restRequest.headers = [StandardHeaders.ContentType => ContentTypes.ApplicationJson];
                         } else if (!restRequest.headers.exists(StandardHeaders.ContentType)) {
