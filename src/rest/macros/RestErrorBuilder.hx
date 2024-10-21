@@ -1,5 +1,7 @@
 package rest.macros;
 
+#if macro
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
@@ -160,3 +162,5 @@ class RestErrorBuilder {
         return fn;
     }
 }
+
+#end

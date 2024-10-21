@@ -5,6 +5,8 @@ class Json2ObjectHelpers {
 		return v.getTime() + '';
 	}
 
+	#if json2object
+
 	public static function parseDate(val:hxjsonast.Json, name:String):Date {
 		return switch (val.value) {
 			case JString(s):
@@ -17,4 +19,5 @@ class Json2ObjectHelpers {
 		}
 	}
     
+	#end
 }

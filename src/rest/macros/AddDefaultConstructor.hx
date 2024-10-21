@@ -1,5 +1,7 @@
 package rest.macros;
 
+#if macro
+
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
@@ -47,3 +49,5 @@ class AddDefaultConstructor {
         return ctor;
     }
 }
+
+#end

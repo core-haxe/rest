@@ -1,5 +1,7 @@
 package rest.parsers;
 
+#if json2object
+
 import hxjsonast.Json;
 
 using StringTools;
@@ -69,3 +71,5 @@ class Json2ObjectParsers {
         return r;
     }
 }
+
+#end

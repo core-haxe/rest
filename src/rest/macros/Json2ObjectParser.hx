@@ -1,5 +1,7 @@
 package rest.macros;
 
+#if macro
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
@@ -182,3 +184,5 @@ class Json2ObjectParser {
         return fn;
     }
 }
+
+#end

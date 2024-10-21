@@ -1,5 +1,7 @@
 package rest.macros;
 
+#if macro
+
 import haxe.macro.TypedExprTools;
 import haxe.macro.TypeTools;
 import haxe.macro.ComplexTypeTools;
@@ -265,3 +267,5 @@ class RestApiBuilder {
         return verbMeta;
     }
 }
+
+#end

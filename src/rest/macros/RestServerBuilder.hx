@@ -1,5 +1,7 @@
 package rest.macros;
 
+#if macro
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
@@ -408,3 +410,5 @@ private typedef RestServerCallInfo = {
     var callName:String;
     var proxyCallName:String;
 }
+
+#end
